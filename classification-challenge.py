@@ -16,25 +16,28 @@ import uuid
 
 training_data_generator = ImageDataGenerator(rescale=1.0/255, zoom_range=0.2)
 test_datagen = ImageDataGenerator(rescale=1./255)
-training_iterator = training_data_generator.flow_from_directory("D:/GitHub/classification-challenge/Covid19-dataset/train", class_mode="categorical", color_mode="grayscale", target_size=(256,256), batch_size=6)
-test_iterator = test_datagen.flow_from_directory("D:/GitHub/classification-challenge/Covid19-dataset/test", class_mode="categorical", color_mode="grayscale", target_size=(256,256), batch_size=6)
+training_iterator = training_data_generator.flow_from_directory("D:/GitHub/classification-challenge/Covid19-dataset/train", class_mode="categorical", color_mode="grayscale", target_size=(256,256), batch_size=32)
+test_iterator = test_datagen.flow_from_directory("D:/GitHub/classification-challenge/Covid19-dataset/test", class_mode="categorical", color_mode="grayscale", target_size=(256,256), batch_size=32)
 
 lungs_model = Sequential()
 lungs_model.add(keras.Input(shape=(256,256,1)))
-lungs_model.add(keras.layers.Conv2D(32, 7, strides=3, activation='relu'))
+lungs_model.add(keras.layers.Conv2D(16, 5, strides=3, activation='relu'))
 lungs_model.add(keras.layers.MaxPooling2D(pool_size=(3,3), strides=2))
-lungs_model.add(keras.layers.Dropout(0.12))
-lungs_model.add(keras.layers.Conv2D(16, 3, activation='relu'))
+lungs_model.add(keras.layers.Dropout(0.1))
+lungs_model.add(keras.layers.Conv2D(8, 3, activation='relu'))
 lungs_model.add(keras.layers.MaxPooling2D(pool_size=(2,2)))
-lungs_model.add(keras.layers.Dropout(0.22))
+lungs_model.add(keras.layers.Dropout(0.15))
+lungs_model.add(keras.layers.Conv2D(4, 3, activation='relu'))
+lungs_model.add(keras.layers.MaxPooling2D(pool_size=(2,2)))
+lungs_model.add(keras.layers.Dropout(0.2))
 lungs_model.add(layers.Flatten())
 lungs_model.add(keras.layers.Dense(3, activation='softmax'))
 lungs_model.summary()
 
-lungs_model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.Adam(learning_rate=0.001), metrics=['accuracy'])
+lungs_model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.Adam(learning_rate=0.0005), metrics=['accuracy'])
 
-stop = EarlyStopping(monitor='loss', mode='min', patience=30)
-history = lungs_model.fit(training_iterator, validation_data=test_iterator, epochs=50,callbacks=[stop], verbose=1)
+stop = EarlyStopping(monitor='loss', mode='min', patience=10)
+history = lungs_model.fit(training_iterator, validation_data=test_iterator, epochs=100,callbacks=[stop], verbose=1)
 
 lungs_model.evaluate(test_iterator, verbose = 0)
 
