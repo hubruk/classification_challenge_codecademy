@@ -16,13 +16,17 @@ import uuid
 
 training_data_generator = ImageDataGenerator(rescale=1.0/255, zoom_range=0.2)
 test_datagen = ImageDataGenerator(rescale=1./255)
-training_iterator = training_data_generator.flow_from_directory("D:/GitHub/classification-challenge/Covid19-dataset/train", class_mode="categorical", color_mode="grayscale", target_size=(256,256), batch_size=2)
-test_iterator = test_datagen.flow_from_directory("D:/GitHub/classification-challenge/Covid19-dataset/test", class_mode="categorical", color_mode="grayscale", target_size=(256,256), batch_size=4)
+training_iterator = training_data_generator.flow_from_directory("D:/GitHub/classification-challenge/Covid19-dataset/train", class_mode="categorical", color_mode="grayscale", target_size=(256,256), batch_size=6)
+test_iterator = test_datagen.flow_from_directory("D:/GitHub/classification-challenge/Covid19-dataset/test", class_mode="categorical", color_mode="grayscale", target_size=(256,256), batch_size=6)
 
 lungs_model = Sequential()
 lungs_model.add(keras.Input(shape=(256,256,1)))
-lungs_model.add(keras.layers.Conv2D(64, 7, activation='relu'))
+lungs_model.add(keras.layers.Conv2D(64, 7, strides=3, activation='relu'))
+lungs_model.add(keras.layers.MaxPooling2D(pool_size=(3,3), strides=2))
+#lungs_model.add(keras.layers.Dropout(0.2))
 lungs_model.add(keras.layers.Conv2D(32, 3, activation='relu'))
+lungs_model.add(keras.layers.MaxPooling2D(pool_size=(2,2)))
+#lungs_model.add(keras.layers.Dropout(0.1))
 lungs_model.add(layers.Flatten())
 lungs_model.add(keras.layers.Dense(3, activation='softmax'))
 lungs_model.summary()
@@ -54,3 +58,15 @@ plot2.set_xlabel('epoch')
 plot2.legend(['train', 'validation'], loc='upper left')
 
 fig.savefig('D:/GitHub/classification-challenge/plots/plot_{}.png'.format(str(uuid.uuid4())))
+
+test_steps_per_epoch = np.math.ceil(test_iterator.samples / test_iterator.batch_size)
+predictions = lungs_model.predict(test_iterator, steps=test_steps_per_epoch)
+test_steps_per_epoch = np.math.ceil(test_iterator.samples / test_iterator.batch_size)
+predicted_classes = np.argmax(predictions, axis=1)
+true_classes = test_iterator.classes
+class_labels = list(test_iterator.class_indices.keys())
+report = classification_report(true_classes, predicted_classes, target_names=class_labels)
+print(report)   
+ 
+cm=confusion_matrix(true_classes,predicted_classes)
+print(cm)
